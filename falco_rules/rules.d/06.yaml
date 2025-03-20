@@ -1,0 +1,14 @@
+- rule: GlusterFS Network Connection Spike
+  desc: Detect unusual number of network connections to GlusterFS ports
+  condition: >
+    evt.type = connect and
+    (fd.sport = 24007 or fd.sport = 49152) and
+    evt.dir = < and
+    proc.name != "glusterd" and
+    fd.sip != "127.0.0.1" and
+    evt.count >= 10
+  output: "High number of connections to GlusterFS ports detected (process=%proc.name connections=%evt.count)"
+  priority: WARNING
+  tags: 
+    - network
+    - glusterfs

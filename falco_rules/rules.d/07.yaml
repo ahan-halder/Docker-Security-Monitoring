@@ -1,0 +1,16 @@
+- rule: GlusterFS Unusual File Extension
+  desc: Detect unusual or potentially malicious file extensions
+  condition: >
+    evt.type in (open, creat) and
+    (
+      fd.name endswith ".exe" or
+      fd.name endswith ".bat" or
+      fd.name endswith ".ps1" or
+      fd.name endswith ".vbs"
+    )
+  output: "Suspicious file type uploaded to GlusterFS (file=%fd.name user=%user.name)"
+  priority: WARNING  
+  tags: 
+    - security
+    - glusterfs
+    - malware

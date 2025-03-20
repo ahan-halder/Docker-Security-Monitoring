@@ -1,0 +1,11 @@
+- rule: GlusterFS High IOPS
+  desc: Detect unusually high I/O operations
+  condition: >
+    evt.type in (read, write) and
+    fd.directory startswith "/mnt/gluster" and
+    evt.count >= 1000
+  output: "High I/O activity on GlusterFS volume (ops=%evt.count directory=%fd.directory)"
+  priority: WARNING
+  tags:
+    - performance
+    - glusterfs

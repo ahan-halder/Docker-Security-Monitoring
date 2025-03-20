@@ -1,0 +1,13 @@
+- macro: file_open_events
+  condition: evt.type in (open, openat)
+
+- rule: Rapid_File_Access
+  desc: Detect rapid file accesses in a short period
+  condition: >
+    file_open_events and
+    user.name != root
+  output: "Rapid file access detected (user=%user.name command=%proc.cmdline file=%fd.name)"
+  priority: WARNING
+  tags:
+    - filesystem
+    - security

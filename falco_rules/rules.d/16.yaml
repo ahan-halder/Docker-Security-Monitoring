@@ -1,0 +1,13 @@
+- rule: GlusterFS Rapid File Access Detected
+  desc: Detects rapid file access activity on GlusterFS when 1000 or more files are accessed in a short time period.
+  condition: >
+    evt.type in (open, openat) and
+    fd.name startswith "/mnt/glusterfs" and
+    evt.count >= 1000
+  output: "High file access activity detected: user=%user.name command=%proc.cmdline file=%fd.name count=%evt.count"
+  priority: WARNING
+  tags:
+    - filesystem
+    - glusterfs
+    - rapid_access
+  enabled: true

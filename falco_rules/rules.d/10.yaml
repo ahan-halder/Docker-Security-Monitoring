@@ -1,0 +1,12 @@
+- rule: GlusterFS Audit Log Tampering
+  desc: Detect modifications to audit logs
+  condition: >
+    evt.type in (rename, unlink) and
+    fd.directory startswith "/var/log/glusterfs/audit" and
+    not proc.name in (logrotate, glusterd)
+  output: "GlusterFS audit log modification detected (user=%user.name action=%evt.type file=%fd.name)"
+  priority: CRITICAL
+  tags:
+    - audit
+    - glusterfs
+    - compliance
