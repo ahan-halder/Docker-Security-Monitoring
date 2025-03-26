@@ -1,0 +1,13 @@
+- rule: GlusterFS Large File Transfer
+  desc: Detect unusually large file transfers through GlusterFS
+  condition: >
+    evt.type = write and
+    fd.type = file and
+    fd.name startswith "/mnt/gluster" and
+    evt.arg.len > 104857600
+  output: "Large file transfer detected (file=%fd.name size=%evt.arg.len user=%user.name)"
+  priority: INFO
+  tags:
+    - filesystem
+    - glusterfs
+    - transfer

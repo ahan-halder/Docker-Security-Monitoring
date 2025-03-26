@@ -1,0 +1,10 @@
+- rule: Detect GlusterFS Log or Volume Tampering
+  desc: Detects any unauthorized access, modification, or deletion of GlusterFS logs or volume metadata.
+  condition: >
+    (evt.type in (open, openat, write, rename, unlink, chmod, chown, truncate) and
+    (fd.name startswith "/var/log/glusterfs/" or
+     fd.name startswith "/var/lib/glusterd/")) and
+    not proc.name in (glusterd, glusterfsd, gluster)
+  output: "Suspicious access or modification of GlusterFS logs or volume metadata (User=%user.name Process=%proc.name File=%fd.name Event=%evt.type)"
+  priority: WARNING
+  tags: [glusterfs, security, tampering]

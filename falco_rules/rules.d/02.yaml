@@ -1,0 +1,11 @@
+- rule: GlusterFS Configuration File Access
+  desc: Detect when someone reads or modifies GlusterFS configuration files
+  condition: >
+    evt.type in (open, openat) and
+    fd.name startswith "/etc/glusterfs" and
+    not proc.name in (glusterd, glusterfs)
+  output: "GlusterFS config file accessed by non-GlusterFS process (user=%user.name command=%proc.cmdline file=%fd.name)"
+  priority: WARNING
+  tags:
+    - filesystem
+    - glusterfs

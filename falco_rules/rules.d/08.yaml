@@ -1,0 +1,15 @@
+- rule: GlusterFS Repeated Failed Access
+  desc: Detect repeated failed access attempts to GlusterFS volumes
+  condition: >
+    evt.type = open and
+    fd.typechar = f and
+    evt.dir = < and
+    evt.res = EACCES and
+    fd.name startswith "/mnt/gluster" and
+    evt.count >= 5
+  output: "Multiple failed access attempts to GlusterFS volume (file=%fd.name attempts=%evt.count user=%user.name)"
+  priority: WARNING
+  tags:
+    - security
+    - glusterfs
+    - access
