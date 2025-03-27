@@ -1,0 +1,10 @@
+- rule: Detect Read-Only Containers Writing to /mnt1
+  desc: Detect write attempts from containers that should be read-only
+  condition: >
+    container.id != "" and 
+    evt.type in (open, creat, write, rename) and 
+    fd.name startswith "/mnt1" and 
+    container.name contains "readonly"
+  output: "Read-only container attempted write: container=%container.name file=%fd.name user=%user.name"
+  priority: WARNING
+  tags: [filesystem, security]
