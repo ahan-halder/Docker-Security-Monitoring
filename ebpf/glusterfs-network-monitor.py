@@ -70,7 +70,7 @@ connection_counts = {}
 # Load and attach BPF
 b = BPF(text=bpf_text)
 b.attach_tracepoint(tp="syscalls:sys_enter_connect", fn_name="trace_sys_connect")
-print("✅ Monitoring GlusterFS ports (24007, 49152)...\n")
+print(" Monitoring GlusterFS ports (24007, 49152)...\n")
 
 # ------------------------
 # Handle BPF event
@@ -91,11 +91,11 @@ def handle_event(cpu, data, size):
         try:
             # Kill all 'nc' processes for this UID
             subprocess.run(["pkill", "-KILL", "-u", str(uid), "nc"], check=False)
-            print(f"[{ts}] 💀 KILLED all 'nc' processes from UID {uid} after {count} GlusterFS connections.")
+            print(f"[{ts}]  KILLED all 'nc' processes from UID {uid} after {count} GlusterFS connections.")
         except Exception as e:
-            print(f"[{ts}] ⚠️ Kill failed: {e}")
+            print(f"[{ts}] Kill failed: {e}")
     else:
-        print(f"[{ts}] ⚠️ WARNING: {proc} (PID {pid}, UID {uid}) made {count} GlusterFS connections.")
+        print(f"[{ts}]  WARNING: {proc} (PID {pid}, UID {uid}) made {count} GlusterFS connections.")
 
 b["events"].open_perf_buffer(handle_event)
 
@@ -106,4 +106,4 @@ try:
     while True:
         b.perf_buffer_poll()
 except KeyboardInterrupt:
-    print("\n👋 Exiting monitor.")
+    print("\n Exiting monitor.")
