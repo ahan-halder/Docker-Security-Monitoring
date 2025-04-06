@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+from bcc import BPF
+import ctypes
+import os
+
+THRESHOLD = 10 * 1024 * 1024  # 10MB threshold
+
+bpf_text = f"""
+#include <uapi/linux/ptrace.h>
+#include <linux/sched.h>
+#include <linux/signal.h>
+
+struct data_t {{
+    u32 pid;
+    long count;
+    char comm[TASK_COMM_LEN];
+}};
+
+BPF_PERF_OUTPUT(events);
+
+int trace_write(struct tracepoint__syscalls__sys_enter_write *ctx)
+{{
+    struct data_t data = {{}};
+    data.pid = bpf_get_current_pid_tgid() >> 32;
+    data.count = ctx->count;
+    bpf_get_current_comm(&data.comm, sizeof(data.comm));
+
+    if (ctx->count >= {THRESHOLD}) {{
+        // Kill process
+        bpf_send_signal(SIGKILL);
+        events.perf_submit(ctx, &data, sizeof(data));
+    }}
+    return 0;
+}}
+"""
+
+# Match struct in Python
+class Data(ctypes.Structure):
+    _fields_ = [
+        ("pid", ctypes.c_uint),
+        ("count", ctypes.c_long),
+        ("comm", ctypes.c_char * 16)
+    ]
+
+print(f"[+] Monitoring processes writing ≥{THRESHOLD//(1024*1024)}MB...")
+
+bpf = BPF(text=bpf_text)
+bpf.attach_tracepoint(tp="syscalls:sys_enter_write", fn_name="trace_write")
+
+def print_event(cpu, data, size):
+    event = ctypes.cast(data, ctypes.POINTER(Data)).contents
+    print(f"[!] KILLED PID={event.pid} COMM={event.comm.decode()} BYTES={event.count}")
+
+bpf["events"].open_perf_buffer(print_event)
+
+try:
+    while True:
+        bpf.perf_buffer_poll()
+except KeyboardInterrupt:
+    print("\n[+] Monitor stopped.")
