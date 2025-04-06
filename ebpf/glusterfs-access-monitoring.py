@@ -27,11 +27,11 @@ int trace_open(struct pt_regs *ctx, int dfd, const char __user *filename, int fl
 
     // Check if file is within /mnt/gluster (basic filtering)
     if (!(event.filename[0] == '/' && event.filename[1] == 'm' &&
-          event.filename[2] == 'n' && event.filename[3] == 't' &&
-          event.filename[4] == '/' && event.filename[5] == 'g' &&
-          event.filename[6] == 'l' && event.filename[7] == 'u' &&
-          event.filename[8] == 's' && event.filename[9] == 't' &&
-          event.filename[10] == 'e' && event.filename[11] == 'r'))
+          event.filename[2] == 'n' && event.filename[3] == 't' && event.filename[4] == '1' && 
+          event.filename[5] == '/' && event.filename[6] == 'g' &&
+          event.filename[7] == 'l' && event.filename[8] == 'u' &&
+          event.filename[9] == 's' && event.filename[10] == 't' &&
+          event.filename[11] == 'e' && event.filename[12] == 'r'))
         return 0;
 
     // Capture PID, UID, and process name
