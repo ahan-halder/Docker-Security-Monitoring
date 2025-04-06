@@ -112,23 +112,23 @@ def handle_event(cpu, data, size):
                 should_kill = True
 
     if should_kill:
-        msg = (f"[{ts}] 🚨 {binary} run by {username} (PID {event.pid}) "
+        msg = (f"[{ts}] {binary} run by {username} (PID {event.pid}) "
                f"in/targeting /trial — args: {args}")
         print(msg)
         log_event(msg)
 
         try:
             os.kill(event.pid, 9)
-            print(f"[{ts}] 💀 Killed PID {event.pid} ({binary})")
-            log_event(f"[{ts}] 💀 Killed PID {event.pid} ({binary})")
+            print(f"[{ts}]  Killed PID {event.pid} ({binary})")
+            log_event(f"[{ts}] Killed PID {event.pid} ({binary})")
         except ProcessLookupError:
-            print(f"[{ts}] ⚠️ PID {event.pid} already exited.")
+            print(f"[{ts}]  PID {event.pid} already exited.")
         except Exception as e:
-            print(f"[{ts}] ❌ Kill error: {e}")
+            print(f"[{ts}]  Kill error: {e}")
 
 # Main function
 if __name__ == "__main__":
-    print("🛡️  Watching for wget/curl commands accessing /trial (auto-kill active)...")
+    print(" Watching for wget/curl commands accessing /trial (auto-kill active)...")
     b = BPF(text=bpf_text)
     b.attach_tracepoint(tp="syscalls:sys_enter_execve", fn_name="trace_execve")
     b["events"].open_perf_buffer(handle_event)
@@ -137,6 +137,6 @@ if __name__ == "__main__":
         while True:
             b.perf_buffer_poll()
     except KeyboardInterrupt:
-        print("\n👋 Exiting.")
+        print("\nExiting.")
 
 
