@@ -26,7 +26,7 @@ TRACEPOINT_PROBE(syscalls, sys_enter_openat) {
     bpf_probe_read_user_str(&data.fname, sizeof(data.fname), (void *)args->filename);
 
     if (data.fname[0] == '/' && data.fname[1] == 'm' && data.fname[2] == 'n' &&
-        data.fname[3] == 't' && data.fname[4] == '/') {
+        data.fname[3] == 't' && data.fname[4] == '1' && data.fname[5] == '/') {
         __builtin_memcpy(data.type, "open", 5);
         events.perf_submit(args, &data, sizeof(data));
     }
@@ -42,7 +42,7 @@ TRACEPOINT_PROBE(syscalls, sys_enter_execve) {
     bpf_probe_read_user_str(&data.fname, sizeof(data.fname), (void *)args->filename);
 
     if (data.fname[0] == '/' && data.fname[1] == 'm' && data.fname[2] == 'n' &&
-        data.fname[3] == 't' && data.fname[4] == '/') {
+        data.fname[3] == 't' && data.fname[4] == '1' && data.fname[5] == '/') {
         __builtin_memcpy(data.type, "execve", 7);
         events.perf_submit(args, &data, sizeof(data));
     }
@@ -64,7 +64,7 @@ class GlusterFsMonitor:
 
         print("============================================================")
         print("GlusterFS Monitor (Tracepoints-based)")
-        print("Monitoring /mnt/glusterfs accesses...")
+        print("Monitoring /mnt1/glusterfs accesses...")
         print("============================================================")
 
     def process_event(self, cpu, data, size):
