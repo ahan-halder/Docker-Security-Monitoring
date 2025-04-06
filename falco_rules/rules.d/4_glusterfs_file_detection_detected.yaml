@@ -2,7 +2,7 @@
   desc: Detects file deletion events on GlusterFS when 1000 or more files are deleted in a minute.
   condition: >
     evt.type in (unlink, unlinkat) and
-    evt.dir startswith "/mnt/glusterfs"
+    evt.dir startswith "/mnt1/"
   output: "High file deletion activity detected: user=%user.name command=%proc.cmdline file=%fd.name"
   priority: WARNING
   tags:

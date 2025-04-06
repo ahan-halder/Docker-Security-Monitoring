@@ -3,7 +3,7 @@
   condition: >
     evt.type = write and
     fd.type = file and
-    fd.name startswith "/mnt/gluster" and
+    fd.name startswith "/mnt1/" and
     evt.arg.len > 104857600
   output: "Large file transfer detected (file=%fd.name size=%evt.arg.len user=%user.name)"
   priority: INFO

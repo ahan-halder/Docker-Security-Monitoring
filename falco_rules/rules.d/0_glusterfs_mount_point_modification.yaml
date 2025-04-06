@@ -2,7 +2,7 @@
   desc: Detect GlusterFS mount point modifications
   condition: >
     evt.type in (open, execve) and
-    fd.name startswith "/mnt/glusterfs"
+    fd.name startswith "/mnt1/"
   output: "GlusterFS mount point accessed/modified (user=%user.name command=%proc.cmdline file=%fd.name)"
   priority: WARNING
   tags: 
