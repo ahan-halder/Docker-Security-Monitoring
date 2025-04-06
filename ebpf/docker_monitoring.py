@@ -154,21 +154,24 @@ def main():
         if not container:
             return  # skip if not in Docker
 
+        if b'runc' in event.comm:
+            return
+
         syscall_map = {1: "open", 2: "unlink", 3: "write"}
         syscall = syscall_map.get(event.syscall, "unknown")
 
         # Decode flags or ret
         info = str(event.flags)
-        if syscall == "open":
-            flag_str = ""
-            if event.flags & os.O_RDONLY: flag_str += "O_RDONLY "
-            if event.flags & os.O_WRONLY: flag_str += "O_WRONLY "
-            if event.flags & os.O_RDWR:   flag_str += "O_RDWR "
-            if event.flags & os.O_CREAT:  flag_str += "O_CREAT "
-            if event.flags & os.O_TRUNC:  flag_str += "O_TRUNC "
-            if event.flags & os.O_APPEND: flag_str += "O_APPEND "
-            info = flag_str.strip()
-        elif syscall == "write":
+        #if syscall == "open":
+        #    flag_str = ""
+        #    if event.flags & os.O_RDONLY: flag_str += "O_RDONLY "
+        #    if event.flags & os.O_WRONLY: flag_str += "O_WRONLY "
+        #    if event.flags & os.O_RDWR:   flag_str += "O_RDWR "
+        #    if event.flags & os.O_CREAT:  flag_str += "O_CREAT "
+        #    if event.flags & os.O_TRUNC:  flag_str += "O_TRUNC "
+        #    if event.flags & os.O_APPEND: flag_str += "O_APPEND "
+        #    info = flag_str.strip()
+        if syscall == "write":
             errno_map = {
                 -30: "EROFS (Read-only FS)",
                 -13: "EACCES (Permission Denied)",
