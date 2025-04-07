@@ -10,9 +10,12 @@
       fd.name endswith ".ps1" or
       fd.name endswith ".vbs"
     )
-  output: "Suspicious file type written to /mnt1 (file=%fd.name user=%user.name>
+  output: >
+    Suspicious file type written to /mnt1
+    (file=%fd.name user=%user.name process=%proc.name command=%proc.cmdline)
   priority: WARNING
   tags:
     - security
     - glusterfs
     - malware
+  enabled: true
