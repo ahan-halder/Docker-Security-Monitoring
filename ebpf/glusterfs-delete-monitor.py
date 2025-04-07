@@ -55,20 +55,20 @@ def handle_event(cpu, data, size):
 
     # KILL at THRESHOLD - 1 to prevent hitting actual limit
     if len(log) >= THRESHOLD - 1:
-        print(f"🚨 MASS DELETE ALERT: PID {pid} attempted {len(log)} deletions in {WINDOW}s! Sending SIGKILL...")
+        print(f" MASS DELETE ALERT: PID {pid} attempted {len(log)} deletions in {WINDOW}s! Sending SIGKILL...")
         try:
             os.kill(pid, signal.SIGKILL)
-            print(f"✅ Killed PID {pid}")
+            print(f" Killed PID {pid}")
         except ProcessLookupError:
-            print(f"❌ PID {pid} already exited")
+            print(f" PID {pid} already exited")
         deletion_log[pid].clear()
 
 # === Start Monitor ===
-print(f"🛡️ Monitoring {MOUNT_PREFIX} for mass deletions ({THRESHOLD - 1} in {WINDOW}s)...")
+print(f" Monitoring {MOUNT_PREFIX} for mass deletions ({THRESHOLD - 1} in {WINDOW}s)...")
 b["events"].open_perf_buffer(handle_event)
 
 try:
     while True:
         b.perf_buffer_poll()
 except KeyboardInterrupt:
-    print("\n🛑 Exiting monitor.")
+    print("\n Exiting monitor.")
