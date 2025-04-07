@@ -3,8 +3,8 @@
   condition: >
     evt.type = execve and
     proc.name in (systemctl, service) and
-    (proc.cmdline contains "glusterd stop" or
-     proc.cmdline contains "glusterd restart")
+    (proc.cmdline contains "stop glusterd" or
+     proc.cmdline contains "restart glusterd")
   output: "GlusterFS service status changed (user=%user.name command=%proc.cmdline)"
   priority: NOTICE
   tags:
