@@ -73,7 +73,7 @@ TRACEPOINT_PROBE(syscalls, sys_enter_openat) {
 
     if ((startswith(data->filename, "/var/log/glusterfs/") ||
          startswith(data->filename, "/var/lib/glusterd/") ||
-         startswith(data->filename, "/mnt/glusterfs/")) &&
+         startswith(data->filename, "/mnt1/")) &&
          endswith(data->filename, ".log")) {
 
         if (streq(data->comm, "glusterd") == 0 ||
