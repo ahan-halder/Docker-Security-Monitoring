@@ -1,16 +1,18 @@
-- rule: GlusterFS Unusual File Extension
-  desc: Detect unusual or potentially malicious file extensions
+- rule: GlusterFS Suspicious File in /mnt1
+  desc: Detect potentially malicious file types created or written under /mnt1
   condition: >
-    evt.type in (open, creat) and
+    evt.type in (open, openat, creat) and
+    evt.dir = < and
+    fd.name startswith "/mnt1/" and
     (
       fd.name endswith ".exe" or
       fd.name endswith ".bat" or
       fd.name endswith ".ps1" or
       fd.name endswith ".vbs"
     )
-  output: "Suspicious file type uploaded to GlusterFS (file=%fd.name user=%user.name)"
-  priority: WARNING  
-  tags: 
+  output: "Suspicious file type written to /mnt1 (file=%fd.name user=%user.name>
+  priority: WARNING
+  tags:
     - security
     - glusterfs
     - malware
