@@ -5,10 +5,14 @@
     (fd.sport = 24007 or fd.sport = 49152) and
     evt.dir = < and
     proc.name != "glusterd" and
-    fd.sip != "127.0.0.1" and
-    evt.count >= 10
-  output: "High number of connections to GlusterFS ports detected (process=%proc.name connections=%evt.count)"
+    fd.sip != "127.0.0.1"
+  output: >
+    "Connection to GlusterFS port detected (process=%proc.name pid=%proc.pid user=%user.name ip=%fd.sip port=%fd.sport)"
   priority: WARNING
   tags: 
     - network
     - glusterfs
+  threshold: 10
+  timeframe: 10s
+  trigger: count
+
