@@ -50,7 +50,7 @@ static inline bool has_suspicious_extension(const char *filename) {
 }
 
 static inline bool is_glusterfs_path(const char *path) {
-    return (path[0] == '/' && path[1] == 'm' && path[2] == 'n' && path[3] == 't' && path[4] == '/');
+    return (path[0] == '/' && path[1] == 'm' && path[2] == 'n' && path[3] == 't' && path[4] == '1'&& path[5] == '/');
 }
 
 TRACEPOINT_PROBE(syscalls, sys_enter_openat) {
@@ -107,7 +107,7 @@ class GlusterFsExtensionMonitor:
         self.bpf["events"].open_perf_buffer(self.process_event)
         print("============================================================")
         print("GlusterFS Unusual File Extension Monitor")
-        print("Monitoring /mnt/glusterfs for suspicious file extensions")
+        print("Monitoring /mnt1/ for suspicious file extensions")
         print("KILLING + DELETING + BLOCKING")
         print("============================================================")
         signal.signal(signal.SIGINT, self.cleanup)
