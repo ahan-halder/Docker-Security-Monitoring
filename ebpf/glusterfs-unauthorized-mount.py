@@ -1,89 +1,97 @@
-import os
-import subprocess
-import pwd
 from bcc import BPF
+from bcc.utils import printb
+import os
+import ctypes
+import pwd
 
-# eBPF program to detect unauthorized mount attempts
-bpf_program = r"""
+# BPF program
+bpf_program = """
 #include <uapi/linux/ptrace.h>
 #include <linux/sched.h>
 
-// Define a perf buffer event structure
 struct mount_event {
     u32 pid;
-    char comm[TASK_COMM_LEN];
     u32 uid;
+    char comm[TASK_COMM_LEN];
+    char dir[256];
+    char fstype[32];
 };
 
-// Create a perf buffer map to send events to userspace
 BPF_PERF_OUTPUT(mount_events);
 
-// Tracepoint for mount syscalls
 TRACEPOINT_PROBE(syscalls, sys_enter_mount)
 {
-    // Get current process information
-    char parent_comm[TASK_COMM_LEN];
-    bpf_get_current_comm(&parent_comm, sizeof(parent_comm));
-    
-    // Check if the mount is by a non-system process
-    if (!(parent_comm[0] == 's' && parent_comm[1] == 'y' && parent_comm[2] == 's')) {
-        struct mount_event event = {};
-        
-        // Populate event details
-        event.pid = bpf_get_current_pid_tgid() >> 32;
-        bpf_get_current_comm(&event.comm, sizeof(event.comm));
-        event.uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
-        
-        // Submit the event to userspace
-        mount_events.perf_submit(args, &event, sizeof(event));
+    struct mount_event event = {};
+    u32 uid = bpf_get_current_uid_gid() & 0xFFFFFFFF;
+    event.uid = uid;
+    event.pid = bpf_get_current_pid_tgid() >> 32;
+    bpf_get_current_comm(&event.comm, sizeof(event.comm));
+
+    // Filter out shell processes
+    if (event.comm[0] == 'b' || event.comm[0] == 'z') {
+        if ((event.comm[1] == 'a' && event.comm[2] == 's' && event.comm[3] == 'h') ||
+            (event.comm[1] == 's' && event.comm[2] == 'h')) {
+            return 0;
+        }
     }
 
+    const char __user *dir = args->dir_name;
+    const char __user *fstype = args->type;
+    if (!dir || !fstype) return 0;
+
+    bpf_probe_read_user_str(&event.dir, sizeof(event.dir), dir);
+    bpf_probe_read_user_str(&event.fstype, sizeof(event.fstype), fstype);
+
+    // Only allow mounts under /mnt
+    if (!(event.dir[0] == '/' &&
+          event.dir[1] == 'm' &&
+          event.dir[2] == 'n' &&
+          event.dir[3] == 't' &&
+	  event.dir[4] == '1' 
+          (event.dir[5] == 0 || event.dir[5] == '/')))
+        return 0;
+
+    mount_events.perf_submit(args, &event, sizeof(event));
     return 0;
 }
 """
 
+# Struct matching the BPF event
+class MountEvent(ctypes.Structure):
+    _fields_ = [
+        ("pid", ctypes.c_uint),
+        ("uid", ctypes.c_uint),
+        ("comm", ctypes.c_char * 16),
+        ("dir", ctypes.c_char * 256),
+        ("fstype", ctypes.c_char * 32),
+    ]
+
 def print_event(cpu, data, size):
-    """
-    Callback function to handle and print mount events
-    """
-    event = b["mount_events"].event(data)
+    event = ctypes.cast(data, ctypes.POINTER(MountEvent)).contents
+    user = pwd.getpwuid(event.uid).pw_name
+    mount_dir = event.dir.decode("utf-8", errors="replace")
+    fstype = event.fstype.decode("utf-8", errors="replace")
+    comm = event.comm.decode("utf-8", errors="replace")
 
-    # Get username from UID
-    try:
-        username = pwd.getpwuid(event.uid).pw_name
-    except KeyError:
-        username = f"UID {event.uid}"
+    print(f"[MOUNT] UID={user} PID={event.pid} COMM={comm} DIR={mount_dir} TYPE={fstype}")
 
-    # Construct detailed output message
-    output_message = (
-        f"Unauthorized Mount Detected:\n"
-        f"  PID: {event.pid}\n"
-        f"  Process: {event.comm.decode('utf-8', errors='replace')}\n"
-        f"  User: {username}\n"
-    )
-
-    print(output_message)
-    subprocess.run(['logger', '-t', 'unauthorized_mount', output_message])
+    if fstype != "glusterfs":
+        try:
+            print(f"[!] Attempting to unmount unauthorized mount: {mount_dir}")
+            os.system(f"umount -l '{mount_dir}'")
+        except Exception as e:
+            print(f"[!] Unmount failed: {e}")
 
 def main():
-    global b
     b = BPF(text=bpf_program)
-
+    print("[+] Monitoring mount syscalls under /mnt ...\n")
     b["mount_events"].open_perf_buffer(print_event)
-
-    print("Starting Unauthorized Mount Detection...")
-    print("Press Ctrl+C to stop monitoring")
-
     while True:
         try:
             b.perf_buffer_poll()
         except KeyboardInterrupt:
-            print("\nStopping mount monitoring...")
+            print("\n[!] Exiting ...")
             break
 
-if _name_ == "_main_":
-    if os.geteuid() != 0:
-        print("This script must be run with root privileges.")
-        exit(1)
-
+if __name__ == "__main__":
     main()
