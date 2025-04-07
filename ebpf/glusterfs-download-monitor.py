@@ -8,8 +8,8 @@ import pwd
 # Constants
 MAX_ARGS = 4
 ARG_LEN = 100
-LOG_FILE = "/var/log/trial_guard.log"
-FALLBACK_LOG = "./trial_guard.log"
+LOG_FILE = "/var/log/mnt1_guard.log"
+FALLBACK_LOG = "./mnt1_guard.log"
 
 # BPF program: captures up to MAX_ARGS arguments
 bpf_text = f"""
@@ -70,15 +70,15 @@ def log_event(msg):
         with open(FALLBACK_LOG, "a") as f:
             f.write(msg + "\n")
 
-# Helper: is path within /trial
+# Helper: is path within /mnt1
 def is_target_arg_path(arg):
-    return arg == "/trial" or arg.startswith("/trial/")
+    return arg == "/mnt1" or arg.startswith("/mnt1/")
 
-# Helper: is process running from /trial
-def is_in_trial_cwd(pid):
+# Helper: is process running from /mnt1
+def is_in_mnt1_cwd(pid):
     try:
         cwd = os.readlink(f"/proc/{pid}/cwd")
-        return cwd == "/trial" or cwd.startswith("/trial/")
+        return cwd == "/mnt1" or cwd.startswith("/mnt1/")
     except Exception:
         return False
 
@@ -90,20 +90,20 @@ def handle_event(cpu, data, size):
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     username = get_username(event.pid)
 
-    trial_in_args = any(is_target_arg_path(arg) for arg in args[1:])
-    trial_cwd = is_in_trial_cwd(event.pid)
+    mnt1_in_args = any(is_target_arg_path(arg) for arg in args[1:])
+    mnt1_cwd = is_in_mnt1_cwd(event.pid)
 
-    # Allow wget/curl in /trial if destination is clearly outside
+    # Allow wget/curl in /mnt1 if destination is clearly outside
     # So kill only if:
-    # 1. args hit /trial
-    # 2. OR cwd is /trial AND args don't clearly write elsewhere
+    # 1. args hit /mnt1
+    # 2. OR cwd is /mnt1 AND args don't clearly write elsewhere
     should_kill = False
 
     if binary in ("wget", "curl"):
-        if trial_in_args:
+        if mnt1_in_args:
             should_kill = True
-        elif trial_cwd:
-            # If ALL args are either not paths or also in /trial — then kill
+        elif mnt1_cwd:
+            # If ALL args are either not paths or also in /mnt1 — then kill
             external_path_found = any(
                 arg.startswith("/") and not is_target_arg_path(arg)
                 for arg in args[1:]
@@ -112,15 +112,15 @@ def handle_event(cpu, data, size):
                 should_kill = True
 
     if should_kill:
-        msg = (f"[{ts}] {binary} run by {username} (PID {event.pid}) "
-               f"in/targeting /trial — args: {args}")
+        msg = (f"[{ts}]      {binary} run by {username} (PID {event.pid}) "
+               f"in/targeting /mnt1 — args: {args}")
         print(msg)
         log_event(msg)
 
         try:
             os.kill(event.pid, 9)
-            print(f"[{ts}]  Killed PID {event.pid} ({binary})")
-            log_event(f"[{ts}] Killed PID {event.pid} ({binary})")
+            print(f"[{ts}] Killed PID {event.pid} ({binary})")
+            log_event(f"[{ts}]  Killed PID {event.pid} ({binary})")
         except ProcessLookupError:
             print(f"[{ts}]  PID {event.pid} already exited.")
         except Exception as e:
@@ -128,7 +128,7 @@ def handle_event(cpu, data, size):
 
 # Main function
 if __name__ == "__main__":
-    print(" Watching for wget/curl commands accessing /trial (auto-kill active)...")
+    print(" Watching for wget/curl commands accessing /mnt1 (auto-kill active)...")
     b = BPF(text=bpf_text)
     b.attach_tracepoint(tp="syscalls:sys_enter_execve", fn_name="trace_execve")
     b["events"].open_perf_buffer(handle_event)
@@ -137,6 +137,5 @@ if __name__ == "__main__":
         while True:
             b.perf_buffer_poll()
     except KeyboardInterrupt:
-        print("\nExiting.")
-
+        print("\n Exiting.")
 
