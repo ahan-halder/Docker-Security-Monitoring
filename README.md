@@ -1,8 +1,76 @@
-# IE Executive Project
-Team members:
+# Docker Security Monitoring in a Distributed File System
+
+**IE Code — Team 2**
+
+Monitor and enforce security policies for Docker containers sharing a GlusterFS distributed filesystem.
+
+## Team Members
+
 1. Aashi Kumari
 2. Prabhav S Korwar
 3. Ahan Halder
+
+## Overview
+
+This project provides dual-layer security monitoring for Docker containers accessing a shared GlusterFS mount (`/mnt1`):
+
+- **Falco** — passive detection and alerting via YAML rules
+- **eBPF (BCC)** — active kernel-level monitoring with enforcement (process termination, file deletion)
+
+### What It Detects
+
+| Threat | Detection Method |
+|--------|-----------------|
+| Unauthorized mount point access | Falco + eBPF |
+| GlusterFS volume operations | Falco + eBPF |
+| Config file tampering (`/etc/glusterfs`) | Falco + eBPF |
+| Service status changes | Falco + eBPF |
+| Network connection spikes | Falco + eBPF |
+| Malicious file extensions (`.exe`, `.bat`, etc.) | Falco + eBPF |
+| Read-only container write attempts | Falco + eBPF |
+| Restricted downloads (wget/curl) | Falco + eBPF |
+| Log tampering | Falco + eBPF |
+
+## Quick Start
+
+```sh
+# Install system dependencies (see Installation Guide below)
+sudo apt install -y bpfcc-tools python3-bpfcc
+pip install -r requirements.txt
+
+# Validate project structure and syntax
+bash scripts/validate.sh
+
+# Deploy Falco rules
+sudo cp falco_rules/rules.d/*.yaml /etc/falco/rules.d/
+sudo systemctl restart falco
+
+# Start an eBPF monitor (requires root)
+sudo python3 ebpf/glusterfs-config-monitor.py
+
+# Start test containers
+cd docker && docker compose up -d
+```
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) — system design and component diagram
+- [Running the Monitors](docs/RUNNING.md) — deployment, testing, and usage guide
+- [Project Report](2_IECode_ProjectExpo_Report.md) — full academic report
+
+## Project Structure
+
+```
+├── ebpf/                          # eBPF monitoring scripts (14 monitors)
+├── ebpf_shell_scripts/            # Test triggers for eBPF monitors
+├── falco_rules/rules.d/           # Falco YAML security rules (10 rules)
+├── falco_rules_shell _scripts/    # Test triggers for Falco rules
+├── docker/                        # Docker Compose for test containers
+├── docs/                          # Architecture and run guides
+├── scripts/                       # Validation utilities
+└── images/                        # Screenshots and metrics dashboards
+```
+
 ---
 # Installation Guide
 
