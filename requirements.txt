@@ -1,0 +1,4 @@
+# Python dependencies for eBPF monitoring scripts
+# BCC must be installed via system packages (see README)
+docker>=6.0.0
+PyYAML>=6.0

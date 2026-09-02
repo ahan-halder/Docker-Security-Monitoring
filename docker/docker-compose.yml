@@ -1,0 +1,20 @@
+services:
+  readonly_container1:
+    image: ubuntu:22.04
+    container_name: readonly_container1
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    volumes:
+      - /mnt1:/mnt1:ro
+    command: sleep infinity
+    restart: unless-stopped
+
+  test_container1:
+    image: ubuntu:22.04
+    container_name: test_container1
+    volumes:
+      - /mnt1:/mnt1
+    command: sleep infinity
+    restart: unless-stopped
