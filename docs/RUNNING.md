@@ -105,6 +105,8 @@ Run the validation script to check syntax and structure without requiring root o
 bash scripts/validate.sh
 ```
 
+This validation also runs automatically in GitHub Actions on every push and pull request (see `.github/workflows/validate.yml`).
+
 This validates:
 - Python syntax for all eBPF scripts
 - Shell script syntax for all test triggers
